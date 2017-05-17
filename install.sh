@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# MIT License
+
+# Copyright (c) 2017 Douglas Wagner
+
+# Full license text included in source directory
+
 # This script installs mkrepo-github into the $HOME/bin directory.
 # If $HOME/bin is not in your PATH variable, you will need to add it
 # to your PATH to use it from anywhere.

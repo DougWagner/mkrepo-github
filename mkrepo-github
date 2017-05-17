@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# MIT License
+
+# Copyright (c) 2017 Douglas Wagner
+
+# Full license text included in source directory
+
 # This script will create a GitHub repository using curl.
 # If the two required fields are not entered in the command line, the script will ask for them.
 # Optional fields are not prompted for if not entered in command line.

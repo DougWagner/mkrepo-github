@@ -110,74 +110,63 @@ then
 fi
 
 # time to generate POST json string for curl
-JSON="{\"name\":\""
+# but first, let's make some functions to help us out
 endquote="\""
+
+add_string() { # arguments $1: type, $2: val
+    add=",\"$1\":\""
+    JSON=$JSON$add$2$endquote
+}
+
+add_boolean() { # arguments $1: type, $2: val
+    if [ "$2" == "true" ] || [ "$2" == "false" ]
+    then
+        add=",\"$1\":$2"
+        JSON=$JSON$add
+    else
+        echo "\"$1\" must be a boolean value"
+        exit
+    fi
+}
+
+# ok NOW we can generate our json object
+JSON="{\"name\":\""
 
 JSON=$JSON$REPONAME$endquote
 
 if [[ ! -z $DESCRIPTION ]]
 then
-    add_description=',"description":"'
-    JSON=$JSON$add_description$DESCRIPTION$endquote
+    add_string "description" "$DESCRIPTION"
 fi
 
 if [[ ! -z $HOMEPAGE ]]
 then
-    add_homepage=',"homepage":"'
-    JSON=$JSON$add_homepage$HOMEPAGE$endquote
+    add_string "homepage" "$HOMEPAGE"
 fi
 
 if [[ ! -z $PRIVATE ]]
 then
-    if [ "$PRIVATE" == "true" ] || [ "$PRIVATE" == "false" ]
-    then
-        add_private=',"private":'
-        JSON=$JSON$add_private$PRIVATE
-    else
-        echo "\"private\" must be a boolean value"
-        exit
-    fi
+    add_boolean "private" "$PRIVATE"
 fi
 
 if [[ ! -z $HAS_ISSUES ]]
 then
-    if [ "$HAS_ISSUES" == "true" ] || [ "$HAS_ISSUES" == "false" ]
-    then
-        add_has_issues=',"has_issues":'
-        JSON=$JSON$add_has_issues$HAS_ISSUES
-    else
-        echo "\"has_issues\" must be a boolean value"
-        exit
-    fi
+    add_boolean "has_issues" "$HAS_ISSUES"
 fi
 
 if [[ ! -z $HAS_PROJECTS ]]
 then
-    if [ "$HAS_PROJECTS" == "true" ] || [ "$HAS_PROJECTS" == "false" ]
-    then
-        add_has_projects=',"has_projects":'
-        JSON=$JSON$add_has_projects$HAS_PROJECTS
-    else
-        echo "\"has_projects\" must be a boolean value"
-        exit
-    fi
+    add_boolean "has_projects" "$HAS_PROJECTS"
 fi
 
 if [[ ! -z $HAS_WIKI ]]
 then
-    if [ "$HAS_WIKI" == "true" ] || [ "$HAS_WIKI" == "false" ]
-    then
-        add_has_wiki=',"has_wiki":'
-        JSON=$JSON$add_has_wiki$HAS_WIKI
-    else
-        echo "\"has_wiki\" must be a boolean value"
-        exit
-    fi
+    add_boolean "has_wiki" "$HAS_WIKI"
 fi
 
 if [[ ! -z $TEAM_ID ]]
-then
-    if [[ $TEAM_ID -eq $TEAM_ID ]]
+then                                # i'm not making this its own function because it's the only option that takes an integer
+    if [[ $TEAM_ID -eq $TEAM_ID ]]  # also, if there's a better way to check if a string is an integer, let me know
     then
         add_team_id=',"team_id":'
         JSON=$JSON$add_team_id$TEAM_ID
@@ -189,70 +178,41 @@ fi
 
 if [[ ! -z $AUTO_INIT ]]
 then
-    if [ "$AUTO_INIT" == "true" ] || [ "$AUTO_INIT" == "false" ]
-    then
-        add_auto_init=',"auto_init":'
-        JSON=$JSON$add_auto_init$AUTO_INIT
-    else
-        echo "\"auto_init\" must be a boolean value"
-        exit
-    fi
+    add_boolean "auto_init" "$AUTO_INIT"
 fi
 
 if [[ ! -z $GITIGNORE_TEMPLATE ]]
 then
-    add_gitignore_template=',"gitignore_template":"'
-    JSON=$JSON$add_gitignore_template$GITIGNORE_TEMPLATE$endquote
+    add_string "gitignore_template" "$GITIGNORE_TEMPLATE"
 fi
 
 if [[ ! -z $LICENSE_TEMPLATE ]]
 then
-    add_license_template=',"license_template":"'
-    JSON=$JSON$add_license_template$LICENSE_TEMPLATE$endquote
+    add_string "license_template" "$LICENSE_TEMPLATE"
 fi
 
 if [[ ! -z $ALLOW_SQUASH_MERGE ]]
 then
-    if [ "$ALLOW_SQUASH_MERGE" == "true" ] || [ "$ALLOW_SQUASH_MERGE" == "false" ]
-    then
-        add_allow_squash_merge=',"allow_squash_merge":'
-        JSON=$JSON$add_allow_squash_merge$ALLOW_SQUASH_MERGE
-    else
-        echo "\"allow_squash_merge\" must be a boolean value"
-        exit
-    fi
+    add_boolean "allow_squash_merge" "$ALLOW_SQUASH_MERGE"
 fi
 
 if [[ ! -z $ALLOW_MERGE_COMMIT ]]
 then
-    if [ "$ALLOW_MERGE_COMMIT" == "true" ] || [ "$ALLOW_MERGE_COMMIT" == "false" ]
-    then
-        add_allow_merge_commit=',"allow_merge_commit":'
-        JSON=$JSON$add_allow_merge_commit$ALLOW_MERGE_COMMIT
-    else
-        echo "\"allow_merge_commit\" must be a boolean value"
-        exit
-    fi
+    add_boolean "allow_merge_commit" "$ALLOW_MERGE_COMMIT"
 fi
 
 if [[ ! -z $ALLOW_REBASE_MERGE ]]
 then
-    if [ "$ALLOW_REBASE_MERGE" == "true" ] || [ "$ALLOW_REBASE_MERGE" == "false" ]
-    then
-        add_allow_rebase_merge=',"allow_rebase_merge":'
-        JSON=$JSON$add_allow_rebase_merge$ALLOW_REBASE_MERGE
-    else
-        echo "\"allow_rebase_merge\" must be a boolean value"
-        exit
-    fi
+    add_boolean "allow_rebase_merge" "$ALLOW_REBASE_MERGE"
 fi
 
 endjson="}"
 JSON=$JSON$endjson
 
 # ok we've gathered the info, let's send our request to GitHub!
-echo "You are about to create a GitHub repository with the following information. Is this correct? (y/n)"
+echo "You are about to create a GitHub repository with the following information."
 echo $JSON
+printf "Is this correct? (y/n) "
 read confirmation
 if [[ $confirmation == "y" ]]
 then

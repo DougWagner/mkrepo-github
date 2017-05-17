@@ -1,0 +1,254 @@
+#!/bin/bash
+
+# This script will create a GitHub repository using curl.
+# If the two required fields are not entered in the command line, the script will ask for them.
+# Optional fields are not prompted for if not entered in command line.
+
+# required fields:
+# username
+# name
+
+# optional fields:
+# description
+# homepage
+# private
+# has_issues
+# has_projects
+# has_wiki
+# team_id
+# auto_init
+# gitignore_template
+# license_template
+# allow_squash_merge
+# allow_merge_commit
+# allow_rebase_merge
+
+# parse command line arguments
+for i in "$@" 
+do
+case $i in
+    --user=*)
+    USERNAME="${i#*=}"
+    ;;
+    --name=*)
+    REPONAME="${i#*=}"
+    ;;
+    --description=*)
+    DESCRIPTION="${i#*=}"
+    ;;
+    --homepage=*)
+    HOMEPAGE="${i#*=}"
+    ;;
+    --private=*)
+    PRIVATE="${i#*=}"
+    ;;
+    --has_issues=*)
+    HAS_ISSUES="${i#*=}"
+    ;;
+    --has_projects=*)
+    HAS_PROJECTS="${i#*=}"
+    ;;
+    --has_wiki=*)
+    HAS_WIKI="${i#*=}"
+    ;;
+    --team_id=*)
+    TEAM_ID="${i#*=}"
+    ;;
+    --auto_init=*)
+    AUTO_INIT="${i#*=}"
+    ;;
+    --gitignore_template=*)
+    GITIGNORE_TEMPLATE="${i#*=}"
+    ;;
+    --license_template=*)
+    LICENSE_TEMPLATE="${i#*=}"
+    ;;
+    --allow_squash_merge=*)
+    ALLOW_SQUASH_MERGE="${i#*=}"
+    ;;
+    --allow_merge_commit=*)
+    ALLOW_MERGE_COMMIT="${i#*=}"
+    ;;
+    --allow_rebase_merge=*)
+    ALLOW_REBASE_MERGE="${i#*=}"
+    ;;
+    *)
+    echo "Invalid argument"
+    echo "Accepted arguments: user, name, description, homepage, private, has_issues, has_projects, has_wiki, team_id, auto_init, gitignore_template, license_template, allow_squash_merge, allow_merge_commit, allow_rebase_merge"
+    echo "Usage: mkrepo-github --user=[username] --name=[reponame]"
+    exit
+esac
+done
+
+# obtain GitHub username if not entered in command line
+if [[ -z $USERNAME ]]
+then
+    printf "Enter your GitHub username: "
+    read USERNAME
+fi
+
+# obtain repository name if not entered in command line
+if [[ -z $REPONAME ]]
+then
+    printf "Enter the name of the repository you wish to create: "
+    read REPONAME
+fi
+
+# make sure repository name is valid
+whitespace=" "
+if [[ $REPONAME =~ $whitespace ]]
+then
+    echo "Invalid repository name: cannot contain spaces"
+    echo "Consider using '-' instead of whitespace"
+    exit
+fi
+
+# time to generate POST json string for curl
+JSON="{\"name\":\""
+endquote="\""
+
+JSON=$JSON$REPONAME$endquote
+
+if [[ ! -z $DESCRIPTION ]]
+then
+    add_description=',"description":"'
+    JSON=$JSON$add_description$DESCRIPTION$endquote
+fi
+
+if [[ ! -z $HOMEPAGE ]]
+then
+    add_homepage=',"homepage":"'
+    JSON=$JSON$add_homepage$HOMEPAGE$endquote
+fi
+
+if [[ ! -z $PRIVATE ]]
+then
+    if [ "$PRIVATE" == "true" ] || [ "$PRIVATE" == "false" ]
+    then
+        add_private=',"private":'
+        JSON=$JSON$add_private$PRIVATE
+    else
+        echo "\"private\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $HAS_ISSUES ]]
+then
+    if [ "$HAS_ISSUES" == "true" ] || [ "$HAS_ISSUES" == "false" ]
+    then
+        add_has_issues=',"has_issues":'
+        JSON=$JSON$add_has_issues$HAS_ISSUES
+    else
+        echo "\"has_issues\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $HAS_PROJECTS ]]
+then
+    if [ "$HAS_PROJECTS" == "true" ] || [ "$HAS_PROJECTS" == "false" ]
+    then
+        add_has_projects=',"has_projects":'
+        JSON=$JSON$add_has_projects$HAS_PROJECTS
+    else
+        echo "\"has_projects\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $HAS_WIKI ]]
+then
+    if [ "$HAS_WIKI" == "true" ] || [ "$HAS_WIKI" == "false" ]
+    then
+        add_has_wiki=',"has_wiki":'
+        JSON=$JSON$add_has_wiki$HAS_WIKI
+    else
+        echo "\"has_wiki\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $TEAM_ID ]]
+then
+    if [[ $TEAM_ID -eq $TEAM_ID ]]
+    then
+        add_team_id=',"team_id":'
+        JSON=$JSON$add_team_id$TEAM_ID
+    else
+        echo "\"team_id\" must be an integer value"
+        exit
+    fi
+fi
+
+if [[ ! -z $AUTO_INIT ]]
+then
+    if [ "$AUTO_INIT" == "true" ] || [ "$AUTO_INIT" == "false" ]
+    then
+        add_auto_init=',"auto_init":'
+        JSON=$JSON$add_auto_init$AUTO_INIT
+    else
+        echo "\"auto_init\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $GITIGNORE_TEMPLATE ]]
+then
+    add_gitignore_template=',"gitignore_template":"'
+    JSON=$JSON$add_gitignore_template$GITIGNORE_TEMPLATE$endquote
+fi
+
+if [[ ! -z $LICENSE_TEMPLATE ]]
+then
+    add_license_template=',"license_template":"'
+    JSON=$JSON$add_license_template$LICENSE_TEMPLATE$endquote
+fi
+
+if [[ ! -z $ALLOW_SQUASH_MERGE ]]
+then
+    if [ "$ALLOW_SQUASH_MERGE" == "true" ] || [ "$ALLOW_SQUASH_MERGE" == "false" ]
+    then
+        add_allow_squash_merge=',"allow_squash_merge":'
+        JSON=$JSON$add_allow_squash_merge$ALLOW_SQUASH_MERGE
+    else
+        echo "\"allow_squash_merge\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $ALLOW_MERGE_COMMIT ]]
+then
+    if [ "$ALLOW_MERGE_COMMIT" == "true" ] || [ "$ALLOW_MERGE_COMMIT" == "false" ]
+    then
+        add_allow_merge_commit=',"allow_merge_commit":'
+        JSON=$JSON$add_allow_merge_commit$ALLOW_MERGE_COMMIT
+    else
+        echo "\"allow_merge_commit\" must be a boolean value"
+        exit
+    fi
+fi
+
+if [[ ! -z $ALLOW_REBASE_MERGE ]]
+then
+    if [ "$ALLOW_REBASE_MERGE" == "true" ] || [ "$ALLOW_REBASE_MERGE" == "false" ]
+    then
+        add_allow_rebase_merge=',"allow_rebase_merge":'
+        JSON=$JSON$add_allow_rebase_merge$ALLOW_REBASE_MERGE
+    else
+        echo "\"allow_rebase_merge\" must be a boolean value"
+        exit
+    fi
+fi
+
+endjson="}"
+JSON=$JSON$endjson
+
+# ok we've gathered the info, let's send our request to GitHub!
+echo "You are about to create a GitHub repository with the following information. Is this correct? (y/n)"
+echo $JSON
+read confirmation
+if [[ $confirmation == "y" ]]
+then
+    curl -u $USERNAME https://api.github.com/user/repos -d "$JSON"
+fi
